@@ -1,15 +1,15 @@
 ## converters
 
 - [x] [require](#require) 导入
-- [x] [formatTemplate](#formattemplate)
-- [x] [mermaidToSvg](#mermaidtosvg)
-- [x] [flowchartToSvg](#flowcharttosvg)
-- [x] [vegaliteToSvg](#vegalitetosvg)
-- [x] [tableToPug](#tabletopug)
-- [x] [parseDataUrl](#parsedataurl)
-- [x] [chartjsToPNG](#chartjstopng)
-- [x] [asyncMathjax](#asyncmathjax)
-- [x] [getMatch](#getmatch)
+- [x] [formatTemplate](#formattemplate) 将 `*.pug` 模版变 `html`, 这样可以 请求 相关库
+- [x] [mermaidToSvg](#mermaidtosvg) mermaid 变 Svg
+- [x] [flowchartToSvg](#flowcharttosvg) * 变 *
+- [x] [vegaliteToSvg](#vegalitetosvg) * 变 *
+- [x] [tableToPug](#tabletopug) * 变 *
+- [x] [parseDataUrl](#parsedataurl)  图片 路径 获取
+- [x] [chartjsToPNG](#chartjstopng) * 变 *
+- [x] [asyncMathjax](#asyncmathjax) 异步设置html 中的数字符号
+- [x] [getMatch](#getmatch) 匹配
 - [x] [masterDocumentToPDF](#masterdocumenttopdf) `pug`类文档变`pdf` <==❤️
 
 ### require
@@ -45,7 +45,7 @@ https://github.com/donpark/html2jade
 
 ### formatTemplate
 
-将 类型 `pug` 模版变 `html`, 这样可以 请求 相关库
+将 `*.pug` 模版变 `html`, 这样可以 请求 相关库
 
 ``` js
 function formatTemplate (tempName, data) {
@@ -281,6 +281,8 @@ tbody
 </details>
 
 ### parseDataUrl
+
+图片 路径 获取
 
 ``` js
 function parseDataUrl (dataUrl) {

@@ -1,13 +1,13 @@
 ## converters
 
 - [x] [require](#require) 导入
-- [ ] [formatTemplate](#formattemplate)
-- [ ] [mermaidToSvg](#mermaidtosvg)
-- [ ] [flowchartToSvg](#flowcharttosvg)
-- [ ] [vegaliteToSvg](#vegalitetosvg)
-- [ ] [tableToPug](#tabletopug)
-- [ ] [parseDataUrl](#parsedataurl)
-- [ ] [chartjsToPNG](#chartjstopng)
+- [x] [formatTemplate](#formattemplate)
+- [x] [mermaidToSvg](#mermaidtosvg)
+- [x] [flowchartToSvg](#flowcharttosvg)
+- [x] [vegaliteToSvg](#vegalitetosvg)
+- [x] [tableToPug](#tabletopug)
+- [x] [parseDataUrl](#parsedataurl)
+- [x] [chartjsToPNG](#chartjstopng)
 - [x] [asyncMathjax](#asyncmathjax)
 - [x] [getMatch](#getmatch)
 - [x] [masterDocumentToPDF](#masterdocumenttopdf) `pug`类文档变`pdf` <==❤️
@@ -45,7 +45,7 @@ https://github.com/donpark/html2jade
 
 ### formatTemplate
 
-将 `pug`模版变 `html`
+将 类型 `pug` 模版变 `html`, 这样可以 请求 相关库
 
 ``` js
 function formatTemplate (tempName, data) {
@@ -53,14 +53,50 @@ function formatTemplate (tempName, data) {
 }
 ```
 
+比如 `templates/chartjs.pug`
+
+<details>
+
+``` pug
+script(src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js') 
+<!-- 请求 -->
+#chartContainer
+  canvas#myChart
+script.
+  window.pngData = false
+  var canvas = document.getElementById("myChart")
+  var container = document.getElementById("chartContainer")
+  function onComplete () {
+    window.pngData = canvas.toDataURL();
+  }
+  var config=!{chartSpec};
+  config.options.animation = {duration: 0, onComplete: onComplete}
+  if (config.options.width) {
+    canvas.style.width = config.options.width
+    container.style.width = config.options.width
+  }
+  if (config.options.height) {
+    canvas.style.height = config.options.height
+    container.style.height = config.options.height
+  }
+  
+  var ctx = document.getElementById("myChart").getContext('2d');
+  var myChart = new Chart(ctx, config)
+  
+```
+
+</details>
+
 ### mermaidToSvg
+
+mermaid 变 Svg
 
 ``` js 
 exports.mermaidToSvg = async function (mermaidPath, page) {
-  var mermaidSpec = fs.readFileSync(mermaidPath, 'utf8')
-  var html = formatTemplate('mermaid', { mermaidSpec })
-  await page.setContent(html)
-  await page.waitForSelector('#graph svg')
+  var mermaidSpec = fs.readFileSync(mermaidPath, 'utf8') // 内容
+  var html = formatTemplate('mermaid', { mermaidSpec }) // 获取库
+  await page.setContent(html) // 赛进入
+  await page.waitForSelector('#graph svg') // 等到 发生
   var svg = await page.evaluate(function () {
     var el = document.querySelector('#graph svg')
     el.removeAttribute('height')
@@ -68,15 +104,31 @@ exports.mermaidToSvg = async function (mermaidPath, page) {
     return el.outerHTML
   })
   var svgPath = mermaidPath.substr(0, mermaidPath.lastIndexOf('.')) + '.svg'
-  await writeFile(svgPath, svg)
+  await writeFile(svgPath, svg) // 写入相关路径
 }
 ```
 
+`termplates/mermaid.pug`
+
+<details>
+
+``` pug
+script(src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.1.2/mermaid.min.js")
+#graph.mermaid #{mermaidSpec}
+
+
+```
+
+</details>
+
+
 ### flowchartToSvg
+
+flowchart 变 Svg
 
 ``` js 
 exports.flowchartToSvg = async function (flowchartPath, page) {
-  var flowchartSpec = fs.readFileSync(flowchartPath, 'utf8')
+  var flowchartSpec = fs.readFileSync(flowchartPath, 'utf8') // 读
   var flowchartConf = '{}'
   var possibleConfs = [
     path.join(path.resolve(flowchartPath, '..'), 'flowchart.default.json'),
@@ -99,40 +151,89 @@ exports.flowchartToSvg = async function (flowchartPath, page) {
     return el.outerHTML
   })
   var svgPath = flowchartPath.substr(0, flowchartPath.lastIndexOf('.')) + '.svg'
-  await writeFile(svgPath, svg)
+  await writeFile(svgPath, svg) // 写入香港
 }
 ```
 
+
+`termplates/flowchart.pug`
+
+<details>
+
+``` pug
+script(src='http://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.0/raphael-min.js')
+script(src='http://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js')
+script(src='http://flowchart.js.org/flowchart-latest.js')
+script.
+  $(document).ready(function() {
+    var chart = flowchart.parse(`!{flowchartSpec}`)
+    var conf = {'symbols': []}
+    for (var c of ['start', 'end', 'operation', 'subroutine', 'condition', 'inputoutput']) {
+      conf.symbols[c] = {'class': c + '-element'}  
+    }
+    conf = Object.assign({}, conf, !{flowchartConf})
+    console.log(conf)
+    chart.drawSVG('chart', conf)
+  });
+body
+  #chart
+
+```
+
+</details>
+
+
 ### vegaliteToSvg
+
+vegalite 变 Svg
 
 ``` js 
 exports.vegaliteToSvg = async function (vegalitePath, page) {
-  var vegaliteSpec = fs.readFileSync(vegalitePath, 'utf8')
-  var html = formatTemplate('vegalite', { vegaliteSpec })
+  var vegaliteSpec = fs.readFileSync(vegalitePath, 'utf8') // 读
+  var html = formatTemplate('vegalite', { vegaliteSpec }) // 引入
   // var tempHTML = vegalitePath + '.htm'
   // await writeFile(tempHTML, html)
   // await page.goto('file:' + tempHTML);
   await page.setContent(html)
   await page.waitForSelector('#vis svg')
-  var svg = await page.evaluate(function () {
+  var svg = await page.evaluate(function () { //
     var el = document.querySelector('#vis svg')
     el.removeAttribute('height')
     el.removeAttribute('width')
     return el.outerHTML
   })
   var svgPath = vegalitePath.substr(0, vegalitePath.length - '.vegalite.json'.length) + '.svg'
-  await writeFile(svgPath, svg)
+  await writeFile(svgPath, svg) // 写
 }
 
 ```
 
+`termplates/vegalite.pug`
+
+<details>
+
+``` pug
+script(src='https://cdn.jsdelivr.net/npm/vega@3.0.10')
+script(src='https://cdn.jsdelivr.net/npm/vega-lite@2.1.3')
+script(src='https://cdn.jsdelivr.net/npm/vega-embed@3.0.0')
+#vis
+script(type='text/javascript').
+  vegaEmbed('#vis', !{vegaliteSpec}, {'renderer': 'svg'});
+
+```
+
+
+</details>
+
 ### tableToPug
+
+`csv` -> `table` 变 `Pug`
 
 ``` js 
 exports.tableToPug = function (tablePath) {
   var extension, header
   var rows = []
-  csv({noheader: true})
+  csv({noheader: true}) // 设置
     .fromFile(tablePath)
     .on('csv', (csvRow) => { rows.push(csvRow) })
     .on('done', (error) => {
@@ -146,7 +247,7 @@ exports.tableToPug = function (tablePath) {
           extension = '.table.csv'
           header = null
         }
-        var html = formatTemplate('table', { header: header, tbody: rows })
+        var html = formatTemplate('table', { header: header, tbody: rows }) // 读
         var pugPath = tablePath.substr(0, tablePath.length - extension.length) + '.pug'
         html2jade.convertHtml(html, {bodyless: true}, function (err, jade) {
           if (err) {
@@ -159,6 +260,25 @@ exports.tableToPug = function (tablePath) {
 }
 
 ```
+
+`termplates/table.pug`
+
+<details>
+
+``` pug
+if header
+  thead
+    for th in header
+      th= th
+tbody
+  for tr in tbody
+    tr
+      for td in tr
+        td= td
+
+```
+
+</details>
 
 ### parseDataUrl
 
@@ -175,21 +295,57 @@ function parseDataUrl (dataUrl) {
 
 ### chartjsToPNG
 
+chartjs 变成 PNG
+
 ```  js
 exports.chartjsToPNG = async function (chartjsPath, page) {
-  var chartSpec = fs.readFileSync(chartjsPath, 'utf8')
-  var html = formatTemplate('chartjs', { chartSpec })
+  var chartSpec = fs.readFileSync(chartjsPath, 'utf8') // 读
+  var html = formatTemplate('chartjs', { chartSpec }) // 引
   var tempHTML = chartjsPath + '.htm'
   await writeFile(tempHTML, html)
   // await page.goto('file:' + tempHTML);
-  await page.setContent(html)
+  await page.setContent(html) // 塞
   await page.waitForFunction(() => window.pngData)
   const dataUrl = await page.evaluate(() => window.pngData)
   const { buffer } = parseDataUrl(dataUrl)
   var pngPath = chartjsPath.substr(0, chartjsPath.length - '.chart.js'.length) + '.png'
-  await writeFile(pngPath, buffer, 'base64')
+  await writeFile(pngPath, buffer, 'base64') // 写
 }
 ```
+
+
+`termplates/chartjs.pug`
+
+<details>
+
+``` pug
+script(src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js')
+#chartContainer
+  canvas#myChart
+script.
+  window.pngData = false
+  var canvas = document.getElementById("myChart")
+  var container = document.getElementById("chartContainer")
+  function onComplete () {
+    window.pngData = canvas.toDataURL();
+  }
+  var config=!{chartSpec};
+  config.options.animation = {duration: 0, onComplete: onComplete}
+  if (config.options.width) {
+    canvas.style.width = config.options.width
+    container.style.width = config.options.width
+  }
+  if (config.options.height) {
+    canvas.style.height = config.options.height
+    container.style.height = config.options.height
+  }
+  
+  var ctx = document.getElementById("myChart").getContext('2d');
+  var myChart = new Chart(ctx, config)
+  
+```
+
+</details>
 
 ### asyncMathjax
 
@@ -245,7 +401,7 @@ exports.masterDocumentToPDF = async function (masterPath, page, tempHTML, output
   }
   // 获得 html 格式 文件数据
 
-  html = await asyncMathjax(html) // 处理 html 中 TeX 数字符号
+  html = await asyncMathjax(html) // 处理 html 中 TeX 数字符号 // 这里有Bug
 
   var parsedHtml = cheerio.load(html) // 将 html 变成 JQuery类可操作格式
   html = parsedHtml.html() // adds html, body, head.
